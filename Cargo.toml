@@ -1,0 +1,7 @@
+[package]
+name = "deep_safe_drop"
+version = "0.0.1"
+authors = ["Derick Eddington"]
+edition = "2018"
+description = "Safe dropping of deep trees that otherwise could cause stack overflow."
+license = "Unlicense"
