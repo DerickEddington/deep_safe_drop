@@ -59,6 +59,8 @@ impl NewLink<BinaryTree<Self>> for DynBox {
 
 
 const FAN_DEGREE: usize = 2;
+
+#[allow(clippy::integer_division)]
 const STRETCH_LEN: usize = TREE_SIZE / 7;
 
 

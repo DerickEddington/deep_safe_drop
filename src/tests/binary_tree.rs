@@ -16,8 +16,8 @@ impl<L> BinaryTree<L>
         let mut fan = Self { left: None, right: None };
 
         if depth > 0 {
-            fan.left = Some(L::new(Self::make_fan(depth - 1)));
-            fan.right = Some(L::new(Self::make_fan(depth - 1)));
+            fan.left = Some(L::new(Self::make_fan(depth.saturating_sub(1))));
+            fan.right = Some(L::new(Self::make_fan(depth.saturating_sub(1))));
         }
 
         fan
@@ -48,8 +48,10 @@ impl<L> DeepSafeDrop<L> for BinaryTree<L>
 
 
 #[test]
-fn exercise()
+fn exercise() -> Result<(), std::num::TryFromIntError>
 {
+    use std::convert::TryInto;
+
     struct BinaryTreeBox (Box<BinaryTree<Self>>);
 
     impl NewLink<BinaryTree<Self>> for BinaryTreeBox {
@@ -79,15 +81,16 @@ fn exercise()
     }
 
 
-    const fn fan_depth(size: usize) -> usize {
-        use std::usize::MAX;
+    const fn fan_depth(size: usize) -> u32 {
         // assert!(0 < size && size < MAX);
-        const WIDTH: u32 = MAX.count_ones();
-        (((WIDTH - 1) - (size + 1).leading_zeros()) - 1) as usize
+        const WIDTH: u32 = usize::max_value().count_ones();
+        ((WIDTH - 1) - (size + 1).leading_zeros()) - 1
     }
 
-    const FAN_DEPTH: usize = fan_depth(TREE_SIZE);
+    const FAN_DEPTH: u32 = fan_depth(TREE_SIZE);
 
-    let fan = BinaryTree::<BinaryTreeBox>::make_fan(FAN_DEPTH);
+    let fan = BinaryTree::<BinaryTreeBox>::make_fan(FAN_DEPTH.try_into()?);
     drop(fan);
+
+    Ok(())
 }

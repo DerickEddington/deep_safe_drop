@@ -27,7 +27,7 @@ where
     L: NewLink<List<L>> + NewLink<BinaryTree<L>>
 {
     let branch = || {
-        let tail = Some(make_stretched_fan(fan_degree - 1, stretch_len));
+        let tail = Some(make_stretched_fan(fan_degree.saturating_sub(1), stretch_len));
         L::new(List::make(stretch_len, tail))
     };
 
