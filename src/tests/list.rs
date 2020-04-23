@@ -37,6 +37,9 @@ impl<L> DeepSafeDrop<L> for List<L>
 }
 
 
+const LIST_LEN: usize = TREE_SIZE;
+
+
 #[test]
 fn no_stack_overflow()
 {
@@ -70,7 +73,22 @@ fn no_stack_overflow()
     }
 
 
-    const LIST_LEN: usize = TREE_SIZE;
+    let list = List::<ListBox>::make(LIST_LEN, None);
+    drop(list);
+}
+
+
+#[test]
+#[ignore]
+fn stack_overflow()
+{
+    struct ListBox (Box<List<Self>>);
+
+    impl NewLink<List<Self>> for ListBox {
+        fn new(list: List<Self>) -> Self {
+            Self(Box::new(list))
+        }
+    }
 
     let list = List::<ListBox>::make(LIST_LEN, None);
     drop(list);

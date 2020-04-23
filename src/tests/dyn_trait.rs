@@ -58,11 +58,35 @@ impl NewLink<BinaryTree<Self>> for DynBox {
 }
 
 
+const FAN_DEGREE: usize = 2;
+const STRETCH_LEN: usize = TREE_SIZE / 7;
+
+
 #[test]
 fn no_stack_overflow()
 {
-    const FAN_DEGREE: usize = 2;
-    const STRETCH_LEN: usize = TREE_SIZE / 7;
+    let fan: DynBox = make_stretched_fan(FAN_DEGREE, STRETCH_LEN);
+    drop(fan);
+}
+
+
+#[test]
+#[ignore]
+fn stack_overflow()
+{
+    struct DynBox (Box<dyn DeepSafeDrop<Self>>);
+
+    impl NewLink<List<Self>> for DynBox {
+        fn new(node: List<Self>) -> Self {
+            Self(Box::new(node))
+        }
+    }
+
+    impl NewLink<BinaryTree<Self>> for DynBox {
+        fn new(node: BinaryTree<Self>) -> Self {
+            Self(Box::new(node))
+        }
+    }
 
     let fan: DynBox = make_stretched_fan(FAN_DEGREE, STRETCH_LEN);
     drop(fan);
