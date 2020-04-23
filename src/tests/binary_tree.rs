@@ -23,12 +23,15 @@ impl<L> BinaryTree<L>
 
         fan
     }
+}
 
-    pub fn take_first_child(&mut self) -> Option<L> {
+impl<L> DeepSafeDrop<L> for BinaryTree<L>
+{
+    fn take_first_child(&mut self) -> Option<L> {
         self.left.take()
     }
 
-    pub fn replace_first_child_with_parent(&mut self, parent: L)
+    fn replace_first_child_with_parent(&mut self, parent: L)
         -> ReplacedFirstChild<L>
     {
         if let Some(child) = self.left.take() {
@@ -39,25 +42,8 @@ impl<L> BinaryTree<L>
         }
     }
 
-    pub fn take_next_child(&mut self) -> Option<L> {
-        self.right.take()
-    }
-}
-
-impl<L> DeepSafeDrop<L> for BinaryTree<L>
-{
-    fn take_first_child(&mut self) -> Option<L> {
-        Self::take_first_child(self)
-    }
-
-    fn replace_first_child_with_parent(&mut self, parent: L)
-        -> ReplacedFirstChild<L>
-    {
-        Self::replace_first_child_with_parent(self, parent)
-    }
-
     fn take_next_child(&mut self) -> Option<L> {
-        Self::take_next_child(self)
+        self.right.take()
     }
 }
 

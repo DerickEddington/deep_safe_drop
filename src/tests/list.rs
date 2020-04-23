@@ -12,12 +12,15 @@ impl<L> List<L>
     {
         (0 .. size).fold(Self(tail), |acc, _| Self(Some(L::new(acc))))
     }
+}
 
-    pub fn take_first_child(&mut self) -> Option<L> {
+impl<L> DeepSafeDrop<L> for List<L>
+{
+    fn take_first_child(&mut self) -> Option<L> {
         self.0.take()
     }
 
-    pub fn replace_first_child_with_parent(&mut self, parent: L)
+    fn replace_first_child_with_parent(&mut self, parent: L)
         -> ReplacedFirstChild<L>
     {
         if let Some(child) = self.0.take() {
@@ -28,25 +31,8 @@ impl<L> List<L>
         }
     }
 
-    pub fn take_next_child(&mut self) -> Option<L> {
-        None
-    }
-}
-
-impl<L> DeepSafeDrop<L> for List<L>
-{
-    fn take_first_child(&mut self) -> Option<L> {
-        Self::take_first_child(self)
-    }
-
-    fn replace_first_child_with_parent(&mut self, parent: L)
-        -> ReplacedFirstChild<L>
-    {
-        Self::replace_first_child_with_parent(self, parent)
-    }
-
     fn take_next_child(&mut self) -> Option<L> {
-        Self::take_next_child(self)
+        None
     }
 }
 

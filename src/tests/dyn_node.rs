@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 
 
 /// Used as both the `Link` and the `Node` types.
-pub struct DynBox (pub Box<dyn DeepSafeDrop<Self, Self>>);
+pub struct DynBox (pub Box<dyn DeepSafeDrop<Self>>);
 
 impl Deref for DynBox {
     /// Dereferences to itself!
@@ -54,41 +54,6 @@ impl NewLink<List<Self>> for DynBox {
 impl NewLink<BinaryTree<Self>> for DynBox {
     fn new(node: BinaryTree<Self>) -> Self {
         Self(Box::new(node))
-    }
-}
-
-
-impl DeepSafeDrop<DynBox, DynBox> for List<DynBox>
-{
-    fn take_first_child(&mut self) -> Option<DynBox> {
-        Self::take_first_child(self)
-    }
-
-    fn replace_first_child_with_parent(&mut self, parent: DynBox)
-        -> ReplacedFirstChild<DynBox>
-    {
-        Self::replace_first_child_with_parent(self, parent)
-    }
-
-    fn take_next_child(&mut self) -> Option<DynBox> {
-        Self::take_next_child(self)
-    }
-}
-
-impl DeepSafeDrop<DynBox, DynBox> for BinaryTree<DynBox>
-{
-    fn take_first_child(&mut self) -> Option<DynBox> {
-        Self::take_first_child(self)
-    }
-
-    fn replace_first_child_with_parent(&mut self, parent: DynBox)
-        -> ReplacedFirstChild<DynBox>
-    {
-        Self::replace_first_child_with_parent(self, parent)
-    }
-
-    fn take_next_child(&mut self) -> Option<DynBox> {
-        Self::take_next_child(self)
     }
 }
 

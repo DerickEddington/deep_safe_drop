@@ -8,9 +8,7 @@
 use core::ops::DerefMut;
 
 
-pub trait DeepSafeDrop<Link, Node = Self>
-where
-    Node: ?Sized,
+pub trait DeepSafeDrop<Link>
 {
     /// Supply the first child and replace the link to it with a non-link, if
     /// the current state of `self` has at least one child.  (Many Self types
@@ -39,10 +37,9 @@ pub enum ReplacedFirstChild<L> {
 
 
 /// Exists only to do the `debug_assert`.
-fn take_first_child<T, L, N>(thing: &mut T) -> Option<L>
+fn take_first_child<T, L>(thing: &mut T) -> Option<L>
 where
-    T: DeepSafeDrop<L, N> + ?Sized,
-    N: ?Sized,
+    T: DeepSafeDrop<L> + ?Sized,
 {
     let first_child = thing.take_first_child();
     debug_assert!(matches!(thing.take_first_child(), None));
@@ -129,11 +126,11 @@ where
 }
 
 #[inline]
-pub fn deep_safe_drop<T, L, N>(root: &mut T)
+pub fn deep_safe_drop<T, L>(root: &mut T)
 where
-    T: DeepSafeDrop<L, N> + ?Sized,
-    L: DerefMut<Target = N>,
-    N: DeepSafeDrop<L> + ?Sized,
+    T: DeepSafeDrop<L> + ?Sized,
+    L: DerefMut,
+    L::Target: DeepSafeDrop<L>,
 {
     if let Some(child) = take_first_child(root) {
         main_deep_safe_drop(child);
