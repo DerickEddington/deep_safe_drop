@@ -2,8 +2,7 @@ use super::*;
 use std::ops::{Deref, DerefMut};
 
 
-pub struct BinaryTree<L>
-{
+pub struct BinaryTree<L> {
     pub left: Option<L>,
     pub right: Option<L>
 }

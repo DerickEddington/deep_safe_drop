@@ -5,7 +5,7 @@ use super::*;
 
 mod list;
 mod binary_tree;
-mod dyn_node;
+mod dyn_trait;
 
 
 /// This results in tree depths that are enough to cause stack overflows when
