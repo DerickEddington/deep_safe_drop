@@ -4,5 +4,7 @@ version = "0.0.3"
 authors = ["Derick Eddington"]
 edition = "2018"
 description = "Safe dropping of deep trees that otherwise could cause stack overflow."
+keywords = ["drop", "tree", "no-std", "no_std"]
+categories = ["rust-patterns", "no-std"]
 license = "Unlicense"
 readme = "README.md"
