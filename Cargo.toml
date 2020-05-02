@@ -7,4 +7,5 @@ description = "Safe dropping of deep trees that otherwise could cause stack over
 keywords = ["drop", "tree", "no-std", "no_std"]
 categories = ["rust-patterns", "no-std"]
 license = "Unlicense"
+repository = "https://github.com/DerickEddington/deep_safe_drop"
 readme = "README.md"
