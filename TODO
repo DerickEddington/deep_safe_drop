@@ -24,3 +24,7 @@ Make some tests::drop_check::* tests that use some facility for verifying that
 all nodes have been dropped and in the expected order and that
 main_deep_safe_drop has only been called the expected very-limited number of
 times.
+
+
+
+Read https://rust-lang.github.io/api-guidelines/ and consider applying it.
