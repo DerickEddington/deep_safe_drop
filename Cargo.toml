@@ -5,3 +5,4 @@ authors = ["Derick Eddington"]
 edition = "2018"
 description = "Safe dropping of deep trees that otherwise could cause stack overflow."
 license = "Unlicense"
+readme = "README.md"
