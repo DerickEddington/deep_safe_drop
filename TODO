@@ -1,0 +1,26 @@
+Test of random-shaped tree: random amount of children per node, random whether a
+child is branch or not.
+
+
+
+Make an integration test that uses multi-threading to parallelize dropping of
+branches.
+
+
+
+Make benchmarks of different drop approaches: move-child-out, ManuallyDrop, and
+deep_safe_drop.  And others?
+
+
+
+To what extent should graphs be supported?  Is it possible for a non-tree graph
+(DAG or cyclic), that uses some Link type that allows such (e.g. Rc with Weak),
+to be given to deep_safe_drop?  What happens?  Should/can this be guarded
+against if it can't be supported?
+
+
+
+Make some tests::drop_check::* tests that use some facility for verifying that
+all nodes have been dropped and in the expected order and that
+main_deep_safe_drop has only been called the expected very-limited number of
+times.
