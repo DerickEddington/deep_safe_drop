@@ -11,10 +11,10 @@ mod dyn_trait;
 /// This results in tree depths that are enough to cause stack overflows when
 /// `deep_safe_drop` is not used for a `Drop` impl.  You may increase this but
 /// more RAM will be required.
-pub const TREE_SIZE: usize = 1 << 20;
+const TREE_SIZE: usize = 1 << 20;
 
 
-pub trait NewLink<Node> {
+trait NewLink<Node> {
     fn new(node: Node) -> Self;
 }
 
@@ -22,7 +22,7 @@ pub trait NewLink<Node> {
 use list::List;
 use binary_tree::BinaryTree;
 
-pub fn make_stretched_fan<L>(fan_degree: usize, stretch_len: usize) -> L
+fn make_stretched_fan<L>(fan_degree: usize, stretch_len: usize) -> L
 where
     L: NewLink<List<L>> + NewLink<BinaryTree<L>>
 {

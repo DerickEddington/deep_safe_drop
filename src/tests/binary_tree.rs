@@ -2,14 +2,14 @@ use super::*;
 use std::ops::{Deref, DerefMut};
 
 
-pub struct BinaryTree<L> {
-    pub left: Option<L>,
-    pub right: Option<L>
+pub(super) struct BinaryTree<L> {
+    pub(super) left: Option<L>,
+    pub(super) right: Option<L>
 }
 
 impl<L> BinaryTree<L>
 {
-    pub fn make_fan(depth: usize) -> Self
+    fn make_fan(depth: usize) -> Self
     where
         L: NewLink<Self>
     {
@@ -76,7 +76,7 @@ fn exercise() -> Result<(), std::num::TryFromIntError>
 
     impl Drop for BinaryTreeBox {
         fn drop(&mut self) {
-            deep_safe_drop(self.deref_mut())
+            deep_safe_drop(&mut **self);
         }
     }
 

@@ -3,7 +3,7 @@ use std::ops::{Deref, DerefMut};
 
 
 /// Used as both the `Link` and the `Node` types.
-pub struct DynBox (pub Box<dyn DeepSafeDrop<Self>>);
+struct DynBox (Box<dyn DeepSafeDrop<Self>>);
 
 impl Deref for DynBox {
     /// Dereferences to itself!
@@ -41,7 +41,7 @@ impl DeepSafeDrop<Self> for DynBox
 /// Comment-out to cause stack overflow.
 impl Drop for DynBox {
     fn drop(&mut self) {
-        deep_safe_drop(self)
+        deep_safe_drop(self);
     }
 }
 

@@ -50,11 +50,11 @@
     missing_debug_implementations,
     missing_docs,
     // missing_doc_code_examples, // maybe someday
-    private_doc_tests,
+    rustdoc::private_doc_tests,
     single_use_lifetimes, // annoying hits on invisible derived impls
     trivial_casts,
     trivial_numeric_casts,
-    // unreachable_pub,
+    unreachable_pub,
     unused_import_braces,
     unused_lifetimes,
     unused_qualifications,
@@ -64,15 +64,13 @@
 
 // Exclude (re-allow) undesired lints included in above groups.
 #![allow(
-    // explicit_outlives_requirements, // annoying hits on invisible derived impls
     clippy::non_ascii_literal,
-    // clippy::must_use_candidate, // excessively pedantic
-    // clippy::missing_errors_doc, // for now
-    // For when clippy::restriction is on:
+    clippy::blanket_clippy_restriction_lints,
     clippy::else_if_without_else,
-    // clippy::missing_inline_in_public_items,
     clippy::implicit_return,
     clippy::missing_docs_in_private_items,
+    clippy::shadow_reuse,
+    clippy::default_numeric_fallback,
 )]
 
 
@@ -107,6 +105,7 @@ pub trait DeepSafeDrop<Link>
 
 /// Result of `DeepSafeDrop::replace_first_child_with_parent`.
 #[derive(Debug)]
+#[allow(clippy::exhaustive_enums)]
 pub enum ReplacedFirstChild<Link> {
     /// There was a first child and it was replaced by the parent.
     Yes {
@@ -171,7 +170,7 @@ where
     L: DerefMut,
     L::Target: DeepSafeDrop<L>,
 {
-    use ReplacedFirstChild::*;
+    use ReplacedFirstChild::{No, Yes};
 
     let mut parent = top;
 
@@ -222,11 +221,11 @@ where
     Link: DerefMut,
     Link::Target: DeepSafeDrop<Link>,
 {
-    if let Some(child) = take_first_child(root) {
-        main_deep_safe_drop(child);
+    if let Some(first_child) = take_first_child(root) {
+        main_deep_safe_drop(first_child);
 
-        while let Some(child) = root.take_next_child() {
-            main_deep_safe_drop(child);
+        while let Some(next_child) = root.take_next_child() {
+            main_deep_safe_drop(next_child);
         }
     }
 }

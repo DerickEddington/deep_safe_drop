@@ -2,11 +2,11 @@ use super::*;
 use std::ops::{Deref, DerefMut};
 
 
-pub struct List<L> (pub Option<L>);
+pub(super) struct List<L> (Option<L>); 
 
 impl<L> List<L>
 {
-    pub fn make(size: usize, tail: Option<L>) -> Self
+    pub(super) fn make(size: usize, tail: Option<L>) -> Self
     where
         L: NewLink<Self>
     {
@@ -68,7 +68,7 @@ fn no_stack_overflow()
     /// Comment-out to cause stack overflow.
     impl Drop for ListBox {
         fn drop(&mut self) {
-            deep_safe_drop(self.deref_mut())
+            deep_safe_drop(&mut **self);
         }
     }
 
