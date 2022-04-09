@@ -48,7 +48,7 @@ impl<L> DeepSafeDrop<L> for BinaryTree<L>
 
 
 #[test]
-fn exercise() -> Result<(), std::num::TryFromIntError>
+fn exercise()
 {
     use std::convert::TryInto;
 
@@ -81,16 +81,15 @@ fn exercise() -> Result<(), std::num::TryFromIntError>
     }
 
 
-    const fn fan_depth(size: usize) -> u32 {
-        // assert!(0 < size && size < MAX);
-        const WIDTH: u32 = usize::max_value().count_ones();
-        ((WIDTH - 1) - (size + 1).leading_zeros()) - 1
+    fn fan_depth(size: usize) -> usize {
+        fn log2(x: usize) -> u32 {
+            (usize::BITS - 1) - x.leading_zeros()
+        }
+        assert!(0 < size && size < usize::MAX);
+        #[allow(clippy::expect_used)]
+        (log2(size + 1) - 1).try_into().expect("impossible")
     }
 
-    const FAN_DEPTH: u32 = fan_depth(TREE_SIZE);
-
-    let fan = BinaryTree::<BinaryTreeBox>::make_fan(FAN_DEPTH.try_into()?);
+    let fan = BinaryTree::<BinaryTreeBox>::make_fan(fan_depth(TREE_SIZE));
     drop(fan);
-
-    Ok(())
 }
