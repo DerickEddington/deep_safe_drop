@@ -44,6 +44,7 @@
     clippy::all,
     clippy::pedantic,
     clippy::restriction,
+    clippy::cargo,
     // Individual lints not included in above groups and desired.
     macro_use_extern_crate,
     missing_copy_implementations,
@@ -71,6 +72,8 @@
     clippy::missing_docs_in_private_items,
     clippy::shadow_reuse,
     clippy::default_numeric_fallback,
+    clippy::mod_module_files,
+    clippy::separated_literal_suffix,
 )]
 
 

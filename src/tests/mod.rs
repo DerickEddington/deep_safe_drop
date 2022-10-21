@@ -1,3 +1,5 @@
+#![allow(clippy::std_instead_of_core)]
+
 extern crate std;
 use std::prelude::v1::*;
 use super::*;
@@ -11,7 +13,7 @@ mod dyn_trait;
 /// This results in tree depths that are enough to cause stack overflows when
 /// `deep_safe_drop` is not used for a `Drop` impl.  You may increase this but
 /// more RAM will be required.
-const TREE_SIZE: usize = 1 << 20;
+const TREE_SIZE: usize = 2_usize.pow(20);
 
 
 trait NewLink<Node> {
@@ -22,6 +24,7 @@ trait NewLink<Node> {
 use list::List;
 use binary_tree::BinaryTree;
 
+#[allow(clippy::trait_duplication_in_bounds)]  // Shouldn't be needed, if it was smarter.
 fn make_stretched_fan<L>(fan_degree: usize, stretch_len: usize) -> L
 where
     L: NewLink<List<L>> + NewLink<BinaryTree<L>>
