@@ -7,18 +7,17 @@ struct DynBox (Box<dyn DeepSafeDrop<Self>>);
 /// Needed because it's used as the `Node` type.
 impl DeepSafeDrop<Self> for DynBox
 {
-    fn take_first_child(&mut self) -> Option<Self> {
-        self.0.take_first_child()
+    fn take_child_at_index_0(&mut self) -> Option<Self> {
+        self.0.take_child_at_index_0()
     }
 
-    fn replace_first_child_with_parent(&mut self, parent: Self)
-        -> ReplacedFirstChild<Self>
+    fn set_parent_at_index_0(&mut self, parent: Self) -> SetParent<Self>
     {
-        self.0.replace_first_child_with_parent(parent)
+        self.0.set_parent_at_index_0(parent)
     }
 
-    fn take_next_child(&mut self) -> Option<Self> {
-        self.0.take_next_child()
+    fn take_next_child_at_pos_index(&mut self) -> Option<Self> {
+        self.0.take_next_child_at_pos_index()
     }
 }
 

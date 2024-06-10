@@ -90,56 +90,76 @@ use core::borrow::BorrowMut;
 /// any extra state beyond their normal state.
 pub trait DeepSafeDrop<Link>
 {
-    /// Supply the first child and replace the link to it with a non-link, if
-    /// the current state of `self` has at least one child.
-    fn take_first_child(&mut self) -> Option<Link>;
-
-    /// Supply the first child and replace the link to it with a given
-    /// replacement that links to the parent of `self`, if the current state of
-    /// `self` has at least one child.
-    fn replace_first_child_with_parent(&mut self, parent: Link)
-        -> ReplacedFirstChild<Link>;
-
-    /// Supply the next child and replace the link to it with a non-link, if the
+    /// Take the next child and replace the link to it with a non-link, if the
     /// current state of `self` has another child that has not been supplied
-    /// yet.
-    fn take_next_child(&mut self) -> Option<Link>;
+    /// yet.  This may return the child at index 0 when there is one.
+    #[inline]
+    fn take_next_child_at_any_index(&mut self) -> Option<Link>
+    {
+        self.take_child_at_index_0().or_else(|| self.take_next_child_at_pos_index())
+    }
+
+    /// Take the child at index 0 and replace the link to it with a given
+    /// replacement that links to the parent of `self`.
+    fn set_parent_at_index_0(&mut self, parent: Link) -> SetParent<Link>;
+
+    /// Take the child at index 0 and replace the link to it with a non-link.
+    fn take_child_at_index_0(&mut self) -> Option<Link>;
+
+    /// Take the next child at an index greater than or equal to 1 and replace
+    /// the link to it with a non-link, if the current state of `self` has
+    /// another child at those indices that has not been supplied yet.  This
+    /// must not return the child at index 0 when there is one, because that is
+    /// reused to link to the parent.
+    fn take_next_child_at_pos_index(&mut self) -> Option<Link>;
 }
 
-/// Result of `DeepSafeDrop::replace_first_child_with_parent`.
+/// Result of `DeepSafeDrop::set_parent_at_index_0`.
 #[derive(Debug)]
 #[allow(clippy::exhaustive_enums)]
-pub enum ReplacedFirstChild<Link> {
-    /// There was a first child and it was replaced by the parent.
-    Yes {
-        /// The first child that was taken.
-        first_child: Link
+pub enum SetParent<Link> {
+    /// There was a child at index 0 and it was replaced by the parent.
+    YesReplacedChild {
+        /// The child at index 0 that was taken.
+        child0: Link
     },
-    /// There was not any child, so no replacement was done, so the parent must
-    /// be returned back.
+    /// The parent was set at index 0 and no child was replaced.
+    Yes,
+    /// No setting could be done, because the node has no links, so the parent
+    /// must be returned back.
     No {
-        /// The same parent that was given to the function call.
+        /// The same `parent` value that was given to the method call.
         returned_parent: Link
-    },
+     },
 }
 
 
+/// Exists only to help do a `debug_assert`.
+fn has_child_at_any_index<L, N>(node: &mut N) -> bool
+where
+    N: DeepSafeDrop<L> + ?Sized,
+{
+    node.take_next_child_at_any_index().or_else(
+        || node.take_child_at_index_0().or_else(
+            || node.take_next_child_at_pos_index())).is_some()
+}
+
 /// Exists only to do the `debug_assert`.
-fn take_first_child<T, L>(thing: &mut T) -> Option<L>
+fn take_child_at_index_0<T, L>(thing: &mut T) -> Option<L>
 where
     T: DeepSafeDrop<L> + ?Sized,
 {
-    let first_child = thing.take_first_child();
-    debug_assert!(matches!(thing.take_first_child(), None));
-    first_child
+    let child0 = thing.take_child_at_index_0();
+    debug_assert!(thing.take_child_at_index_0().is_none());
+    child0
 }
 
-/// A node's first-child link is reused as the parent link.
+/// A node's link at index 0 is reused as the parent link.
 fn take_parent<L, N>(node: &mut N) -> Option<L>
 where
     N: DeepSafeDrop<L> + ?Sized,
 {
-    take_first_child(node)
+    take_child_at_index_0(node)
 }
 
 /// Return the nearest ancestor that has a next child if any, or the root
@@ -152,7 +172,7 @@ where
 {
     let mut ancestor = parent;
     loop {
-        if let Some(next_child) = ancestor.borrow_mut().take_next_child() {
+        if let Some(next_child) = ancestor.borrow_mut().take_next_child_at_pos_index() {
             break (ancestor, Some(next_child));
         }
         else if let Some(grandancestor) = take_parent(ancestor.borrow_mut()) {
@@ -173,40 +193,47 @@ where
     L: BorrowMut<N>,
     N: DeepSafeDrop<L> + ?Sized,
 {
-    use ReplacedFirstChild::{No, Yes};
-
     let mut parent = top;
 
-    if let Some(mut cur) = take_first_child(parent.borrow_mut()) {
+    if let Some(mut cur) = parent.borrow_mut().take_next_child_at_any_index() {
         loop {
-            match cur.borrow_mut().replace_first_child_with_parent(parent)
+            match cur.borrow_mut().set_parent_at_index_0(parent)
             {
-                Yes { first_child } => {
+                SetParent::YesReplacedChild { child0 } => {
                     parent = cur;
-                    cur = first_child;
+                    cur = child0;
+                    continue;
                 }
-                No { returned_parent } => {
-                    parent = returned_parent;
-
-                    // `cur` is a leaf node so drop it here.
-                    drop(cur);
-
-                    let (ancestor, ancestor_child) = take_ancestor_next_child(parent);
-                    parent = ancestor;
-
-                    if let Some(ancestor_child) = ancestor_child {
-                        cur = ancestor_child;
+                SetParent::Yes => {
+                    if let Some(child) = cur.borrow_mut().take_next_child_at_pos_index() {
+                        parent = cur;
+                        cur = child;
+                        continue;
                     }
                     else {
-                        // Done. `parent` is now `top` which is now mutated to
-                        // no longer have any children, so, when dropping it is
-                        // completed by the compiler after this function
-                        // returns, recursion into children cannot occur and so
-                        // stack overflow cannot occur.
-                        drop(parent);
-                        break;
+                        parent = cur;
                     }
                 }
+                SetParent::No { returned_parent } => {
+                    debug_assert!(!has_child_at_any_index(cur.borrow_mut()));
+                    parent = returned_parent;
+                }
+            }
+
+            let (ancestor, ancestor_child) = take_ancestor_next_child(parent);
+            parent = ancestor;
+
+            if let Some(ancestor_child) = ancestor_child {
+                cur = ancestor_child;
+            }
+            else {
+                // Done. `parent` is now `top` which is now mutated to
+                // no longer have any children, so, when dropping it is
+                // completed by the compiler after this function
+                // returns, recursion into children cannot occur and so
+                // stack overflow cannot occur.
+                drop(parent);
+                break;
             }
         }
     }
@@ -224,13 +251,9 @@ where
     Link: BorrowMut<Node>,
     Node: DeepSafeDrop<Link> + ?Sized,
 {
-    if let Some(first_child) = take_first_child(root) {
-        main_deep_safe_drop(first_child);
-
-        while let Some(next_child) = root.take_next_child() {
+        while let Some(next_child) = root.take_next_child_at_any_index() {
             main_deep_safe_drop(next_child);
         }
-    }
 }
 
 

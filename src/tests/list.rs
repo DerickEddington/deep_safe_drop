@@ -15,22 +15,20 @@ impl<L> List<L>
 
 impl<L> DeepSafeDrop<L> for List<L>
 {
-    fn take_first_child(&mut self) -> Option<L> {
+    fn take_child_at_index_0(&mut self) -> Option<L> {
         self.0.take()
     }
 
-    fn replace_first_child_with_parent(&mut self, parent: L)
-        -> ReplacedFirstChild<L>
-    {
+    fn set_parent_at_index_0(&mut self, parent: L) -> SetParent<L> {
         if let Some(child) = self.0.take() {
             self.0 = Some(parent);
-            ReplacedFirstChild::Yes { first_child: child }
+            SetParent::YesReplacedChild { child0: child }
         } else {
-            ReplacedFirstChild::No { returned_parent: parent }
+            SetParent::No { returned_parent: parent }
         }
     }
 
-    fn take_next_child(&mut self) -> Option<L> {
+    fn take_next_child_at_pos_index(&mut self) -> Option<L> {
         None
     }
 }
