@@ -1,5 +1,4 @@
 use super::*;
-use std::ops::{Deref, DerefMut};
 
 
 pub(super) struct List<L> (Option<L>); 
@@ -51,16 +50,14 @@ fn no_stack_overflow()
         }
     }
 
-    impl Deref for ListBox {
-        type Target = List<Self>;
-
-        fn deref(&self) -> &Self::Target {
-            &*self.0
+    impl Borrow<List<Self>> for ListBox {
+        fn borrow(&self) -> &List<Self> {
+            unreachable!()
         }
     }
 
-    impl DerefMut for ListBox {
-        fn deref_mut(&mut self) -> &mut Self::Target {
+    impl BorrowMut<List<Self>> for ListBox {
+        fn borrow_mut(&mut self) -> &mut List<Self> {
             &mut *self.0
         }
     }
@@ -68,7 +65,7 @@ fn no_stack_overflow()
     /// Comment-out to cause stack overflow.
     impl Drop for ListBox {
         fn drop(&mut self) {
-            deep_safe_drop(&mut **self);
+            deep_safe_drop::<List<Self>, Self, List<Self>>(&mut *self.0);
         }
     }
 

@@ -1,24 +1,8 @@
 use super::{*, list::List, binary_tree::BinaryTree};
-use std::ops::{Deref, DerefMut};
 
 
 /// Used as both the `Link` and the `Node` types.
 struct DynBox (Box<dyn DeepSafeDrop<Self>>);
-
-impl Deref for DynBox {
-    /// Dereferences to itself!
-    type Target = Self;
-
-    fn deref(&self) -> &Self::Target {
-        self
-    }
-}
-
-impl DerefMut for DynBox {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self
-    }
-}
 
 /// Needed because it's used as the `Node` type.
 impl DeepSafeDrop<Self> for DynBox

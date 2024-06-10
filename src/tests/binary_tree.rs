@@ -1,5 +1,4 @@
 use super::*;
-use std::ops::{Deref, DerefMut};
 
 
 pub(super) struct BinaryTree<L> {
@@ -60,23 +59,21 @@ fn exercise()
         }
     }
 
-    impl Deref for BinaryTreeBox {
-        type Target = BinaryTree<Self>;
-
-        fn deref(&self) -> &Self::Target {
-            &*self.0
+    impl Borrow<BinaryTree<Self>> for BinaryTreeBox {
+        fn borrow(&self) -> &BinaryTree<Self> {
+            unreachable!()
         }
     }
 
-    impl DerefMut for BinaryTreeBox {
-        fn deref_mut(&mut self) -> &mut Self::Target {
+    impl BorrowMut<BinaryTree<Self>> for BinaryTreeBox {
+        fn borrow_mut(&mut self) -> &mut BinaryTree<Self> {
             &mut *self.0
         }
     }
 
     impl Drop for BinaryTreeBox {
         fn drop(&mut self) {
-            deep_safe_drop(&mut **self);
+            deep_safe_drop::<_, Self, BinaryTree<Self>>(&mut *self.0);
         }
     }
 

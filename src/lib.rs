@@ -77,11 +77,11 @@
 )]
 
 
-use core::ops::DerefMut;
+use core::borrow::BorrowMut;
 
 
 /// Implement this for your tree node type, with `Link` as your tree link type
-/// that dereferences to your node type.
+/// that references or is your node type.
 ///
 /// The `Link` type may be the same as the `Self` type, when possible, which
 /// might be convenient.  Or, they can be different.
@@ -145,17 +145,17 @@ where
 /// Return the nearest ancestor that has a next child if any, or the root
 /// ancestor even when it does not have a next child.  Drop any ancestors in the
 /// upwards path that do not have a child but that do have a parent.
-fn take_ancestor_next_child<L>(parent: L) -> (L, Option<L>)
+fn take_ancestor_next_child<L, N>(parent: L) -> (L, Option<L>)
 where
-    L: DerefMut,
-    L::Target: DeepSafeDrop<L>,
+    L: BorrowMut<N>,
+    N: DeepSafeDrop<L> + ?Sized,
 {
     let mut ancestor = parent;
     loop {
-        if let Some(next_child) = ancestor.take_next_child() {
+        if let Some(next_child) = ancestor.borrow_mut().take_next_child() {
             break (ancestor, Some(next_child));
         }
-        else if let Some(grandancestor) = take_parent(&mut *ancestor) {
+        else if let Some(grandancestor) = take_parent(ancestor.borrow_mut()) {
             // `ancestor` is now a leaf node so drop it here.
             drop(ancestor);
             ancestor = grandancestor;
@@ -168,18 +168,18 @@ where
 
 
 /// The main algorithm.
-fn main_deep_safe_drop<L>(top: L)
+fn main_deep_safe_drop<L, N>(top: L)
 where
-    L: DerefMut,
-    L::Target: DeepSafeDrop<L>,
+    L: BorrowMut<N>,
+    N: DeepSafeDrop<L> + ?Sized,
 {
     use ReplacedFirstChild::{No, Yes};
 
     let mut parent = top;
 
-    if let Some(mut cur) = take_first_child(&mut *parent) {
+    if let Some(mut cur) = take_first_child(parent.borrow_mut()) {
         loop {
-            match cur.replace_first_child_with_parent(parent)
+            match cur.borrow_mut().replace_first_child_with_parent(parent)
             {
                 Yes { first_child } => {
                     parent = cur;
@@ -215,14 +215,14 @@ where
 /// To be called from your `Drop::drop` implementations, to ensure that stack
 /// overflow is avoided.
 ///
-/// The `RootNode` type may be different than the primary `Link::Target` node
-/// type, when possible, which might be convenient.  Or, they can be the same.
+/// The `RootNode` type may be different than the primary `Node` type, when
+/// possible, which might be convenient.  Or, they can be the same.
 #[inline]
-pub fn deep_safe_drop<RootNode, Link>(root: &mut RootNode)
+pub fn deep_safe_drop<RootNode, Link, Node>(root: &mut RootNode)
 where
     RootNode: DeepSafeDrop<Link> + ?Sized,
-    Link: DerefMut,
-    Link::Target: DeepSafeDrop<Link>,
+    Link: BorrowMut<Node>,
+    Node: DeepSafeDrop<Link> + ?Sized,
 {
     if let Some(first_child) = take_first_child(root) {
         main_deep_safe_drop(first_child);
