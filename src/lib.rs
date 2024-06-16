@@ -1,31 +1,56 @@
 //! Safe dropping of deep trees that otherwise could cause stack overflow.
 //!
 //! Does not require any allocation and reuses existing space of a tree to
-//! enable working back up a tree branch, instead of the stack.
+//! enable working back up a tree branch, instead of the call-stack.
+//!
+//! No `unsafe` code.
 //!
 //! Is `no_std` and so can be used in constrained environments (e.g. without
 //! heap allocation).
 //!
 //! Provides:
 //!
-//! - `deep_safe_drop` function to be called from your `Drop::drop`
+//! - [`deep_safe_drop`] function to be called from your [`Drop::drop`]
 //!   implementations.
 //!
-//! - `DeepSafeDrop` trait to be implemented by your types that use
+//! - [`DeepSafeDrop`] trait to be implemented by your types that use
 //!   `deep_safe_drop`.
 //!
 //! Stack overflow is avoided by mutating a tree to become a leaf, i.e. no
-//! longer have any children, before the compiler does its automatic recursive
-//! dropping of fields.  Instead of using recursive function calls
-//! (i.e. recording the continuations on the limited stack) to enable working
-//! back up a tree branch (as the compiler's dropping does, which is what could
-//! otherwise cause stack overflows), we reuse a link of each node to record
-//! which parent node must be worked back up to.  Thus, we are guaranteed to
-//! already have the amount of space needed for our "continuations", no matter
-//! how extremely deep it may need to be, and it is OK to reuse this space
-//! because the links it previously contained are already being dropped anyway.
+//! longer have any children, doing the same mutation to children recursively
+//! but iteratively, mutating children to become leafs, dropping leaf nodes as
+//! they're enountered, before the implicit compiler-added dropping does its
+//! automatic recursive dropping of fields.  Instead of using recursive function
+//! calls (i.e. recording the continuations on the limited call-stack) to enable
+//! working back up a tree branch (as the compiler's dropping does, which is
+//! what could otherwise cause stack overflows), we reuse a link of each node to
+//! record which parent node must be worked back "up" to.  Thus, we are
+//! guaranteed to already have the amount of space needed for our
+//! "continuations", no matter how extremely deep it may need to be, and it is
+//! OK to reuse this space because the links it previously contained are already
+//! being dropped anyway.
 //!
-//! See the included tests for some examples.
+//! A simple example of the mutation steps (nodes are dropped when removed as
+//! leafs):
+//! ```text
+//! Initial:   Step 1:    Step 2:    Step 3:
+//!   a          a          a          a    
+//!    ⭨          ⭦          ⭦              
+//!     b          b          b             
+//!    ⭩ ⭨        ⭧ ⭨          ⭨            
+//!   c   d      c   d          d           
+//!  ⭩ ⭨          ⭨                         
+//! e   f          f                        
+//! ```
+//! Note: Initially, `a` links to `b` and `b` links to `c`, but, at Step 1 and
+//! after, `c` links to `b` and `b` links to `a`.  This is the reuse of a node's
+//! link space to save the parent for later traversing back "up" to it, which
+//! enables transitioning to Steps 2 & 3.  All steps are transitioned to via a
+//! loop in the same single function call, by moving cursors down and "up" the
+//! tree.
+//!
+//! See the tests for some examples of incorporating for different types and
+//! different shapes.
 
 
 #![no_std]
@@ -86,8 +111,9 @@ use core::borrow::BorrowMut;
 /// The `Link` type may be the same as the `Self` type, when possible, which
 /// might be convenient.  Or, they can be different.
 ///
-/// Many `Self` types should be able to implement these methods without needing
-/// any extra state beyond their normal state.
+/// Many node types should be able to implement these methods without needing
+/// any extra state beyond their normal state, e.g. because their link fields
+/// already support some unused state.
 pub trait DeepSafeDrop<Link>
 {
     /// Take the next child and replace the link to it with a non-link, if the
@@ -114,7 +140,7 @@ pub trait DeepSafeDrop<Link>
     fn take_next_child_at_pos_index(&mut self) -> Option<Link>;
 }
 
-/// Result of `DeepSafeDrop::set_parent_at_index_0`.
+/// Result of [`DeepSafeDrop::set_parent_at_index_0`].
 #[derive(Debug)]
 #[allow(clippy::exhaustive_enums)]
 pub enum SetParent<Link> {
@@ -134,32 +160,29 @@ pub enum SetParent<Link> {
 }
 
 
-/// Exists only to help do a `debug_assert`.
-fn has_child_at_any_index<L, N>(node: &mut N) -> bool
+/// Exists to do these `debug_assert`s when a node can be immediately dropped
+/// because it's a leaf.
+fn drop_leaf<L, N>(mut link: L)
 where
+    L: BorrowMut<N>,
     N: DeepSafeDrop<L> + ?Sized,
 {
-    node.take_next_child_at_any_index().or_else(
-        || node.take_child_at_index_0().or_else(
-            || node.take_next_child_at_pos_index())).is_some()
+    let node = link.borrow_mut();
+    debug_assert!(node.take_next_child_at_any_index().is_none());
+    debug_assert!(node.take_child_at_index_0().is_none());
+    debug_assert!(node.take_next_child_at_pos_index().is_none());
+    drop(link);
 }
 
-/// Exists only to do the `debug_assert`.
-fn take_child_at_index_0<T, L>(thing: &mut T) -> Option<L>
-where
-    T: DeepSafeDrop<L> + ?Sized,
-{
-    let child0 = thing.take_child_at_index_0();
-    debug_assert!(thing.take_child_at_index_0().is_none());
-    child0
-}
 
 /// A node's link at index 0 is reused as the parent link.
 fn take_parent<L, N>(node: &mut N) -> Option<L>
 where
     N: DeepSafeDrop<L> + ?Sized,
 {
-    take_child_at_index_0(node)
+    let child0 = node.take_child_at_index_0();
+    debug_assert!(node.take_child_at_index_0().is_none());
+    child0
 }
 
 /// Return the nearest ancestor that has a next child if any, or the root
@@ -176,8 +199,7 @@ where
             break (ancestor, Some(next_child));
         }
         else if let Some(grandancestor) = take_parent(ancestor.borrow_mut()) {
-            // `ancestor` is now a leaf node so drop it here.
-            drop(ancestor);
+            drop_leaf(ancestor);  // `ancestor` is now a leaf node so drop it here.
             ancestor = grandancestor;
         }
         else {
@@ -215,8 +237,8 @@ where
                     }
                 }
                 SetParent::No { returned_parent } => {
-                    debug_assert!(!has_child_at_any_index(cur.borrow_mut()));
                     parent = returned_parent;
+                    drop_leaf(cur);  // `cur` is now a leaf node so drop it here.
                 }
             }
 
@@ -227,19 +249,19 @@ where
                 cur = ancestor_child;
             }
             else {
-                // Done. `parent` is now `top` which is now mutated to
-                // no longer have any children, so, when dropping it is
-                // completed by the compiler after this function
-                // returns, recursion into children cannot occur and so
-                // stack overflow cannot occur.
-                drop(parent);
+                // Done. `parent` is now `top` which is now mutated to no longer
+                // have any children, so, when dropping it is completed, by the
+                // implicit compiler-added code, after this function returns,
+                // recursion into children cannot occur and so stack overflow
+                // cannot occur.
+                drop_leaf(parent);
                 break;
             }
         }
     }
 }
 
-/// To be called from your `Drop::drop` implementations, to ensure that stack
+/// To be called from your [`Drop::drop`] implementations, to ensure that stack
 /// overflow is avoided.
 ///
 /// The `RootNode` type may be different than the primary `Node` type, when

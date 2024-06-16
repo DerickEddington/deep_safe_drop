@@ -25,7 +25,6 @@ trait NewLink<Node> {
 use list::List;
 use binary_tree::BinaryTree;
 
-#[allow(clippy::trait_duplication_in_bounds)]  // Shouldn't be needed, if it was smarter.
 fn make_stretched_fan<L>(fan_degree: usize, stretch_len: usize) -> L
 where
     L: NewLink<List<L>> + NewLink<BinaryTree<L>>
