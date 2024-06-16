@@ -30,6 +30,15 @@ impl DeepSafeDrop<Self> for DynBox
     }
 }
 
+/// Needed because it's also used as the `Link` type.
+impl Link<Self> for DynBox
+{
+    fn get_mut(&mut self) -> &mut Self
+    {
+        self
+    }
+}
+
 /// Comment-out to cause stack overflow.
 impl Drop for DynBox
 {

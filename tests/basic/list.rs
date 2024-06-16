@@ -60,18 +60,9 @@ fn no_stack_overflow()
         }
     }
 
-    impl Borrow<List<Self>> for ListBox
+    impl Link<List<Self>> for ListBox
     {
-        fn borrow(&self) -> &List<Self>
-        {
-            #![allow(clippy::unreachable)]
-            unreachable!()
-        }
-    }
-
-    impl BorrowMut<List<Self>> for ListBox
-    {
-        fn borrow_mut(&mut self) -> &mut List<Self>
+        fn get_mut(&mut self) -> &mut List<Self>
         {
             &mut self.0
         }

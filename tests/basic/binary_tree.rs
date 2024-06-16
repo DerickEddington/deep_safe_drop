@@ -66,18 +66,9 @@ fn exercise()
         }
     }
 
-    impl Borrow<BinaryTree<Self>> for BinaryTreeBox
+    impl Link<BinaryTree<Self>> for BinaryTreeBox
     {
-        fn borrow(&self) -> &BinaryTree<Self>
-        {
-            #![allow(clippy::unreachable)]
-            unreachable!()
-        }
-    }
-
-    impl BorrowMut<BinaryTree<Self>> for BinaryTreeBox
-    {
-        fn borrow_mut(&mut self) -> &mut BinaryTree<Self>
+        fn get_mut(&mut self) -> &mut BinaryTree<Self>
         {
             &mut self.0
         }

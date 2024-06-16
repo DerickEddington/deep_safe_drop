@@ -2,8 +2,6 @@
 #![cfg_attr(windows, doc = include_str!("..\\README.md"))]
 #![no_std]
 
-use core::borrow::BorrowMut;
-
 
 /// Implement this for your tree node type, with `Link` as your tree link type that references or
 /// is your node type.
@@ -66,14 +64,24 @@ pub enum SetParent<Link>
     },
 }
 
+/// Implement this for your tree link type, with `Node` as your tree node type.
+///
+/// The `Node` type may be the same as the `Self` type, when possible, which might be convenient.
+/// Or, they can be different.
+pub trait Link<Node: ?Sized>
+{
+    /// Return a mutable reference to the node that `self` links to.
+    fn get_mut(&mut self) -> &mut Node;
+}
+
 
 /// Exists to do these `debug_assert`s when a node can be immediately dropped because it's a leaf.
 fn drop_leaf<L, N>(mut link: L)
 where
-    L: BorrowMut<N>,
+    L: Link<N>,
     N: DeepSafeDrop<L> + ?Sized,
 {
-    let node = link.borrow_mut();
+    let node = link.get_mut();
     debug_assert!(node.take_next_child_at_any_index().is_none(), "must be leaf");
     debug_assert!(node.take_child_at_index_0().is_none(), "must be leaf");
     debug_assert!(node.take_next_child_at_pos_index().is_none(), "must be leaf");
@@ -96,15 +104,15 @@ where N: DeepSafeDrop<L> + ?Sized
 /// but that do have a parent.
 fn take_ancestor_next_child<L, N>(parent: L) -> (L, Option<L>)
 where
-    L: BorrowMut<N>,
+    L: Link<N>,
     N: DeepSafeDrop<L> + ?Sized,
 {
     let mut ancestor = parent;
     loop {
-        if let Some(next_child) = ancestor.borrow_mut().take_next_child_at_pos_index() {
+        if let Some(next_child) = ancestor.get_mut().take_next_child_at_pos_index() {
             break (ancestor, Some(next_child));
         }
-        else if let Some(grandancestor) = take_parent(ancestor.borrow_mut()) {
+        else if let Some(grandancestor) = take_parent(ancestor.get_mut()) {
             drop_leaf(ancestor); // `ancestor` is now a leaf node so drop it here.
             ancestor = grandancestor;
         }
@@ -118,21 +126,21 @@ where
 /// The main algorithm.
 fn main_deep_safe_drop<L, N>(top: L)
 where
-    L: BorrowMut<N>,
+    L: Link<N>,
     N: DeepSafeDrop<L> + ?Sized,
 {
     let mut parent = top;
 
-    if let Some(mut cur) = parent.borrow_mut().take_next_child_at_any_index() {
+    if let Some(mut cur) = parent.get_mut().take_next_child_at_any_index() {
         loop {
-            match cur.borrow_mut().set_parent_at_index_0(parent) {
+            match cur.get_mut().set_parent_at_index_0(parent) {
                 SetParent::YesReplacedChild { child0 } => {
                     parent = cur;
                     cur = child0;
                     continue;
                 },
                 SetParent::Yes => {
-                    let next = cur.borrow_mut().take_next_child_at_pos_index();
+                    let next = cur.get_mut().take_next_child_at_pos_index();
                     parent = cur;
                     if let Some(child) = next {
                         cur = child;
@@ -173,7 +181,7 @@ where
 pub fn deep_safe_drop<RootNode, Link, Node>(root: &mut RootNode)
 where
     RootNode: DeepSafeDrop<Link> + ?Sized,
-    Link: BorrowMut<Node>,
+    Link: crate::Link<Node>,
     Node: DeepSafeDrop<Link> + ?Sized,
 {
     while let Some(next_child) = root.take_next_child_at_any_index() {

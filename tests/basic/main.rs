@@ -1,12 +1,6 @@
 #![cfg(test)] // Satisfy the `clippy::tests_outside_test_module` lint.
 
-use {
-    core::borrow::{
-        Borrow,
-        BorrowMut,
-    },
-    deep_safe_drop::*,
-};
+use deep_safe_drop::*;
 
 
 mod list;

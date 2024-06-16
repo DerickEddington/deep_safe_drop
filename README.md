@@ -13,7 +13,9 @@ Provides:
 
 - [`deep_safe_drop`] function to be called from your [`Drop::drop`] implementations.
 
-- [`DeepSafeDrop`] trait to be implemented by your types that use `deep_safe_drop`.
+- [`DeepSafeDrop`] trait to be implemented by your node types that use `deep_safe_drop`.
+
+- [`Link`] trait to be implemented by your link types involved in `DeepSafeDrop`.
 
 Stack overflow is avoided by mutating a tree to become a leaf, i.e. no longer have any children,
 doing the same mutation to children recursively but iteratively, dropping leaf nodes as they're
