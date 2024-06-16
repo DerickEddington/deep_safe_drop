@@ -1,55 +1,7 @@
 #![cfg_attr(not(windows), doc = include_str!("../README.md"))]
 #![cfg_attr(windows, doc = include_str!("..\\README.md"))]
 
-
 #![no_std]
-
-
-#![forbid(unsafe_code)]
-
-// Warn about desired lints that would otherwise be allowed by default.
-#![warn(
-    // Groups
-    future_incompatible,
-    nonstandard_style,
-    rust_2018_compatibility, // unsure if needed with edition="2018"
-    rust_2018_idioms,
-    unused,
-    clippy::all,
-    clippy::pedantic,
-    clippy::restriction,
-    clippy::cargo,
-    // Individual lints not included in above groups and desired.
-    macro_use_extern_crate,
-    missing_copy_implementations,
-    missing_debug_implementations,
-    missing_docs,
-    // missing_doc_code_examples, // maybe someday
-    rustdoc::private_doc_tests,
-    single_use_lifetimes, // annoying hits on invisible derived impls
-    trivial_casts,
-    trivial_numeric_casts,
-    unreachable_pub,
-    unused_import_braces,
-    unused_lifetimes,
-    unused_qualifications,
-    unused_results,
-    variant_size_differences,
-)]
-
-// Exclude (re-allow) undesired lints included in above groups.
-#![allow(
-    clippy::non_ascii_literal,
-    clippy::blanket_clippy_restriction_lints,
-    clippy::else_if_without_else,
-    clippy::implicit_return,
-    clippy::missing_docs_in_private_items,
-    clippy::shadow_reuse,
-    clippy::default_numeric_fallback,
-    clippy::mod_module_files,
-    clippy::separated_literal_suffix,
-)]
-
 
 use core::borrow::BorrowMut;
 
