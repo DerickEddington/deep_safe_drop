@@ -48,7 +48,7 @@ impl<L> DeepSafeDrop<L> for BinaryTree<L>
 #[test]
 fn exercise()
 {
-    use std::convert::TryInto;
+    use core::convert::TryInto;
 
     struct BinaryTreeBox (Box<BinaryTree<Self>>);
 
@@ -60,13 +60,14 @@ fn exercise()
 
     impl Borrow<BinaryTree<Self>> for BinaryTreeBox {
         fn borrow(&self) -> &BinaryTree<Self> {
+            #![allow(clippy::unreachable)]
             unreachable!()
         }
     }
 
     impl BorrowMut<BinaryTree<Self>> for BinaryTreeBox {
         fn borrow_mut(&mut self) -> &mut BinaryTree<Self> {
-            &mut *self.0
+            &mut self.0
         }
     }
 

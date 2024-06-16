@@ -50,13 +50,14 @@ fn no_stack_overflow()
 
     impl Borrow<List<Self>> for ListBox {
         fn borrow(&self) -> &List<Self> {
+            #![allow(clippy::unreachable)]
             unreachable!()
         }
     }
 
     impl BorrowMut<List<Self>> for ListBox {
         fn borrow_mut(&mut self) -> &mut List<Self> {
-            &mut *self.0
+            &mut self.0
         }
     }
 
@@ -77,7 +78,7 @@ fn no_stack_overflow()
 #[ignore]
 fn stack_overflow()
 {
-    struct ListBox (Box<List<Self>>);
+    struct ListBox (#[allow(dead_code)] Box<List<Self>>);
 
     impl NewLink<List<Self>> for ListBox {
         fn new(list: List<Self>) -> Self {

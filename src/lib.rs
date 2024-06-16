@@ -69,9 +69,9 @@ where
     N: DeepSafeDrop<L> + ?Sized,
 {
     let node = link.borrow_mut();
-    debug_assert!(node.take_next_child_at_any_index().is_none());
-    debug_assert!(node.take_child_at_index_0().is_none());
-    debug_assert!(node.take_next_child_at_pos_index().is_none());
+    debug_assert!(node.take_next_child_at_any_index().is_none(), "must be leaf");
+    debug_assert!(node.take_child_at_index_0().is_none(), "must be leaf");
+    debug_assert!(node.take_next_child_at_pos_index().is_none(), "must be leaf");
     drop(link);
 }
 
@@ -82,7 +82,7 @@ where
     N: DeepSafeDrop<L> + ?Sized,
 {
     let child0 = node.take_child_at_index_0();
-    debug_assert!(node.take_child_at_index_0().is_none());
+    debug_assert!(node.take_child_at_index_0().is_none(), "must be gone after take");
     child0
 }
 
@@ -128,13 +128,11 @@ where
                     continue;
                 }
                 SetParent::Yes => {
-                    if let Some(child) = cur.borrow_mut().take_next_child_at_pos_index() {
-                        parent = cur;
+                    let next = cur.borrow_mut().take_next_child_at_pos_index();
+                    parent = cur;
+                    if let Some(child) = next {
                         cur = child;
                         continue;
-                    }
-                    else {
-                        parent = cur;
                     }
                 }
                 SetParent::No { returned_parent } => {

@@ -1,4 +1,4 @@
-# deep_safe_drop
+# `deep_safe_drop`
 
 Safe dropping of deep trees that otherwise could cause stack overflow.
 

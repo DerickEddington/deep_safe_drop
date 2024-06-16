@@ -58,7 +58,7 @@ fn no_stack_overflow()
 #[ignore]
 fn stack_overflow()
 {
-    struct DynBox (Box<dyn DeepSafeDrop<Self>>);
+    struct DynBox (#[allow(dead_code)] Box<dyn DeepSafeDrop<Self>>);
 
     impl NewLink<List<Self>> for DynBox {
         fn new(node: List<Self>) -> Self {
