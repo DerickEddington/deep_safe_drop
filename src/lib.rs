@@ -178,7 +178,3 @@ where
             main_deep_safe_drop(next_child);
         }
 }
-
-
-#[cfg(test)]
-mod tests;

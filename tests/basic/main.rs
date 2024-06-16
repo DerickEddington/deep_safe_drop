@@ -1,9 +1,5 @@
-#![allow(clippy::std_instead_of_core)]
-
-extern crate std;
-use std::prelude::v1::*;
-use std::borrow::Borrow;
-use super::*;
+use core::borrow::{Borrow, BorrowMut};
+use deep_safe_drop::*;
 
 
 mod list;
