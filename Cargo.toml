@@ -2,7 +2,8 @@
 name = "deep_safe_drop"
 version = "0.0.5"
 authors = ["Derick Eddington"]
-edition = "2018"
+edition = "2021"
+rust-version = "1.56"
 description = "Safe dropping of deep trees that otherwise could cause stack overflow."
 keywords = ["drop", "tree", "no-std", "no_std"]
 categories = ["rust-patterns", "no-std"]
@@ -19,6 +20,7 @@ future_incompatible =             { level = "warn", priority = -1 }
 nonstandard_style =               { level = "warn", priority = -1 }
 rust_2018_compatibility =         { level = "warn", priority = -1 }
 rust_2018_idioms =                { level = "warn", priority = -1 }
+rust_2021_compatibility =         { level = "warn", priority = -1 }
 unused =                          { level = "warn", priority = -1 }
 # Individual lints not included in above groups and desired.
 let_underscore_drop =             "warn"
